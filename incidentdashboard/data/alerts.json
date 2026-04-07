@@ -1,0 +1,14 @@
+[
+  {
+    "severity": "CRITICAL",
+    "title": "API Latency > 500ms"
+  },
+  {
+    "severity": "HIGH",
+    "title": "TLS Certificate Expiring"
+  },
+  {
+    "severity": "MEDIUM",
+    "title": "Disk Usage > 85%"
+  }
+]
