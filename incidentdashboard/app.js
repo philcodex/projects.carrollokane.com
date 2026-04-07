@@ -1,10 +1,16 @@
-// Incident Response Dashboard App
+// ==============================
+// Incident Response Dashboard
+// Full Working Version
+// ==============================
+
 
 let alertsData = [];
-let activeCount = 0;
-let resolvedCount = 0;
 
-// Load alerts from JSON
+
+// ==============================
+// Load Alerts
+// ==============================
+
 fetch("data/alerts.json")
 .then(response => response.json())
 .then(data => {
@@ -17,7 +23,10 @@ fetch("data/alerts.json")
 });
 
 
-// Render Alerts to Dashboard
+
+// ==============================
+// Render Alerts
+// ==============================
 
 function renderAlerts() {
 
@@ -28,59 +37,84 @@ function renderAlerts() {
 
     alertsData.forEach(alert => {
 
-        if (alert.status !== "Resolved") {
+        const div =
+            document.createElement("div");
 
-            const div =
-                document.createElement("div");
+        // Severity colour logic
+
+        if (alert.status === "Resolved") {
+
+            div.className =
+                "alert RESOLVED";
+
+        }
+
+        else {
 
             div.className =
                 "alert " + alert.severity;
 
-            div.innerHTML = `
-
-                <strong>${alert.severity}</strong>
-                - ${alert.title}
-                <br>
-                Time: ${alert.time}
-
-                <br><br>
-
-                <button onclick="acknowledge(${alert.id})">
-                    Acknowledge
-                </button>
-
-                <button onclick="investigate(${alert.id})">
-                    Investigating
-                </button>
-
-                <button onclick="resolveIncident(${alert.id})">
-                    Resolve
-                </button>
-
-            `;
-
-            // Click alert → load logs
-            div.onclick = () => loadLogs(alert.id);
-
-            container.appendChild(div);
-
         }
+
+        div.innerHTML = `
+
+            <strong>${alert.severity}</strong>
+            — ${alert.title}
+
+            <br>
+
+            Time: ${alert.time}
+
+            <br>
+
+            Status:
+            <strong>${alert.status}</strong>
+
+            <br><br>
+
+            <button onclick="acknowledge(${alert.id}); event.stopPropagation();">
+                Acknowledge
+            </button>
+
+            <button onclick="investigate(${alert.id}); event.stopPropagation();">
+                Investigating
+            </button>
+
+            <button onclick="resolveIncident(${alert.id}); event.stopPropagation();">
+                Resolve
+            </button>
+
+        `;
+
+        // Click loads logs + timeline
+
+        div.onclick = () => {
+
+            loadLogs(alert.id);
+            loadTimeline(alert.id);
+
+        };
+
+        container.appendChild(div);
 
     });
 
 }
 
 
-// Update Active / Resolved Counters
+
+// ==============================
+// Update Counters
+// ==============================
 
 function updateCounters() {
 
-    activeCount =
+    const activeCount =
         alertsData.filter(a =>
             a.status !== "Resolved"
         ).length;
 
-    resolvedCount =
+    const resolvedCount =
         alertsData.filter(a =>
             a.status === "Resolved"
         ).length;
@@ -94,7 +128,10 @@ function updateCounters() {
 }
 
 
+
+// ==============================
 // Status Actions
+// ==============================
 
 function acknowledge(id) {
 
@@ -112,13 +149,13 @@ function resolveIncident(id) {
 
     updateStatus(id, "Resolved");
 
-    renderAlerts();
-    updateCounters();
-
 }
 
 
-// Update Status Helper
+
+// ==============================
+// Update Status + Timeline
+// ==============================
 
 function updateStatus(id, status) {
 
@@ -128,29 +165,53 @@ function updateStatus(id, status) {
 
             alert.status = status;
 
+            const time =
+                new Date()
+                .toLocaleTimeString();
+
+            if (!alert.timeline) {
+
+                alert.timeline = [];
+
+            }
+
+            alert.timeline.push(
+                time + " — Status: " + status
+            );
+
         }
 
     });
 
+    renderAlerts();
     updateCounters();
+    loadTimeline(id);
 
 }
 
 
+
+// ==============================
 // Load Logs
+// ==============================
 
 function loadLogs(id) {
 
     fetch("logs/sample-logs.txt")
+
     .then(response => response.text())
+
     .then(data => {
 
         const logViewer =
             document.getElementById("logs");
 
         logViewer.textContent =
+
             "Incident ID: " + id +
+
             "\n\n" +
+
             data;
 
     });
@@ -158,7 +219,52 @@ function loadLogs(id) {
 }
 
 
-// Simulated New Alerts (Optional)
+
+// ==============================
+// Load Timeline
+// ==============================
+
+function loadTimeline(id) {
+
+    const incident =
+        alertsData.find(a =>
+            a.id === id
+        );
+
+    const timelineDiv =
+        document.getElementById("timeline");
+
+    timelineDiv.innerHTML = "";
+
+    if (!incident ||
+        !incident.timeline ||
+        incident.timeline.length === 0) {
+
+        timelineDiv.innerHTML =
+            "<p>No timeline available</p>";
+
+        return;
+
+    }
+
+    incident.timeline.forEach(event => {
+
+        const p =
+            document.createElement("p");
+
+        p.textContent = event;
+
+        timelineDiv.appendChild(p);
+
+    });
+
+}
+
+
+
+// ==============================
+// Simulated Alert Generator
+// ==============================
 
 const incidentTypes = [
 
@@ -166,7 +272,8 @@ const incidentTypes = [
 "TLS Certificate Expiring",
 "Disk Usage > 85%",
 "Unauthorized Login Attempt",
-"High Memory Usage Detected"
+"High Memory Usage",
+"Database Failover Triggered"
 
 ];
 
@@ -186,11 +293,24 @@ function generateRandomAlert() {
     const newAlert = {
 
         id: newId,
+
         severity: randomSeverity(),
+
         title: randomTitle,
-        time: new Date()
+
+        time:
+            new Date()
             .toLocaleTimeString(),
-        status: "Active"
+
+        status: "Active",
+
+        timeline: [
+
+            new Date()
+            .toLocaleTimeString() +
+            " — Alert Triggered"
+
+        ]
 
     };
 
@@ -202,21 +322,32 @@ function generateRandomAlert() {
 }
 
 
-// Random Severity Generator
+
+// ==============================
+// Random Severity
+// ==============================
 
 function randomSeverity() {
 
-    const levels =
-        ["CRITICAL", "HIGH", "MEDIUM"];
+    const levels = [
+
+        "CRITICAL",
+        "HIGH",
+        "MEDIUM"
+
+    ];
 
     return levels[
+
         Math.floor(
             Math.random() *
             levels.length
         )
+
     ];
 
 }
+
 
 
 // Auto-generate alerts every 30 seconds
@@ -227,7 +358,10 @@ setInterval(
 );
 
 
+
+// ==============================
 // Live Clock
+// ==============================
 
 setInterval(() => {
 
@@ -245,23 +379,31 @@ setInterval(() => {
 }, 1000);
 
 
-// Add Notes Persistence (local browser)
 
-const notesField =
-    document.getElementById("notes");
+// ==============================
+// Notes Persistence
+// ==============================
 
-if (notesField) {
+window.onload = () => {
 
-    notesField.value =
-        localStorage.getItem("incidentNotes") || "";
+    const notesField =
+        document.getElementById("notes");
 
-    notesField.addEventListener("input", () => {
+    if (notesField) {
 
-        localStorage.setItem(
-            "incidentNotes",
-            notesField.value
-        );
+        notesField.value =
+            localStorage.getItem("incidentNotes")
+            || "";
 
-    });
+        notesField.addEventListener("input", () => {
 
-}
+            localStorage.setItem(
+                "incidentNotes",
+                notesField.value
+            );
+
+        });
+
+    }
+
+};
