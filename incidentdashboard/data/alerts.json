@@ -1,14 +1,23 @@
 [
   {
+    "id": 1,
     "severity": "CRITICAL",
-    "title": "API Latency > 500ms"
+    "title": "API Latency > 500ms",
+    "time": "09:14",
+    "status": "Active"
   },
   {
+    "id": 2,
     "severity": "HIGH",
-    "title": "TLS Certificate Expiring"
+    "title": "TLS Certificate Expiring",
+    "time": "09:18",
+    "status": "Active"
   },
   {
+    "id": 3,
     "severity": "MEDIUM",
-    "title": "Disk Usage > 85%"
+    "title": "Disk Usage > 85%",
+    "time": "09:22",
+    "status": "Active"
   }
 ]
